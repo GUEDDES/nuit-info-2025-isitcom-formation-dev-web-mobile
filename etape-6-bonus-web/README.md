@@ -1,178 +1,97 @@
 # Étape 6 : Bonus Web - Interaction complète
 
 ## 🎯 Objectif
-Ajouter des fonctionnalités complètes d'interaction : **marquer comme complétée** et **supprimer** des tâches.
 
-## 📚 Concepts couverts
-- Requête HTTP PATCH (mise à jour)
-- Requête HTTP DELETE (suppression)
-- Mise à jour optimiste de l'UI
-- Gestion d'événements multiples
-- Styles conditionnels en React
+Compléter l'application avec la fonctionnalité de **toggle** (cocher/décocher) et la **suppression** des tâches via l'API.
 
-## ✨ Nouvelles fonctionnalités
+## 📚 Concepts abordés
 
-### 1. Toggle (marquer comme complétée)
-- Cliquer sur une tâche la marque comme complétée
-- Style barré et grisé pour les tâches terminées
-- Synchronisation avec le serveur (PATCH)
+- Requêtes HTTP PUT (mise à jour)
+- Requêtes HTTP DELETE (suppression)
+- Gestion d'événements onClick
+- Mise à jour optimiste de l'interface
 
-### 2. Suppression
-- Bouton × pour supprimer une tâche
-- Confirmation visuelle immédiate
-- Synchronisation avec le serveur (DELETE)
+## 🔧 Nouvelles fonctionnalités
 
-## 🆕 Nouveautés dans le code
+### 1. Toggle de tâche (PUT)
 
-### 1. Fonction Toggle
-
-```javascript
-const handleToggleTask = async (taskId) => {
-  // Trouver la tâche actuelle
-  const task = tasks.find(t => t.id === taskId);
-  
+```jsx
+const toggleTache = async (id, completed) => {
   try {
-    // Envoyer la mise à jour au serveur
-    const response = await fetch(`${API_URL}/${taskId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        isCompleted: !task.isCompleted,
-      }),
+    const response = await fetch(`http://localhost:1337/todos/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ completed: !completed })
     });
-    
-    const updatedTask = await response.json();
-    
-    // Mettre à jour l'état local
-    setTasks(tasks.map(t => 
-      t.id === taskId ? updatedTask : t
-    ));
-  } catch (err) {
-    console.error("Erreur lors du toggle:", err);
+
+    if (response.ok) {
+      setTaches(taches.map(t => 
+        t.id === id ? { ...t, completed: !completed } : t
+      ));
+    }
+  } catch (error) {
+    console.error('Erreur toggle:', error);
   }
 };
 ```
 
-### 2. Fonction Delete
+### 2. Suppression de tâche (DELETE)
 
-```javascript
-const handleDeleteTask = async (taskId) => {
+```jsx
+const supprimerTache = async (id) => {
   try {
-    await fetch(`${API_URL}/${taskId}`, {
-      method: 'DELETE',
+    const response = await fetch(`http://localhost:1337/todos/${id}`, {
+      method: 'DELETE'
     });
-    
-    // Supprimer de l'état local
-    setTasks(tasks.filter(t => t.id !== taskId));
-  } catch (err) {
-    console.error("Erreur lors de la suppression:", err);
+
+    if (response.ok) {
+      setTaches(taches.filter(t => t.id !== id));
+    }
+  } catch (error) {
+    console.error('Erreur suppression:', error);
   }
 };
 ```
 
-### 3. Rendu avec styles conditionnels
+## 🚀 Démarrage
 
-```javascript
-<li 
-  key={task.id} 
-  className={task.isCompleted ? 'completed' : ''}
-  onClick={() => handleToggleTask(task.id)}
->
-  <span>{task.title}</span>
-  <button 
-    onClick={(e) => {
-      e.stopPropagation(); // Éviter le toggle
-      handleDeleteTask(task.id);
-    }}
-  >
-    ×
-  </button>
-</li>
-```
-
-## 📝 Structure du projet
-
-```
-etape-6-bonus-web/
-├── README.md
-├── package.json
-├── vite.config.js
-├── index.html
-└── src/
-    ├── App.jsx      ← Logique complète
-    ├── App.css      ← Styles améliorés
-    └── main.jsx
-```
-
-## 🚀 Installation et lancement
-
-### 1. Installer les dépendances
+### 1. Backend (Terminal 1)
 ```bash
-cd etape-6-bonus-web
-npm install
-```
-
-### 2. Lancer le serveur backend
-```bash
-cd ../etape-0-backend
+cd ../etape-0-backend/todo-api
 npm start
 ```
 
-### 3. Lancer l'application React
+### 2. Frontend (Terminal 2)
 ```bash
+cd etape-6-bonus-web
+npm install
 npm run dev
 ```
 
-### 4. Ouvrir dans le navigateur
-```
-http://localhost:5173
-```
+Ouvrez [http://localhost:5173](http://localhost:5173)
 
-## ✅ Test de l'étape
+## ✅ Résultat attendu
 
-1. **Ajouter des tâches** : Créez plusieurs tâches
-2. **Marquer comme complétée** : Cliquez sur une tâche pour la barrer
-3. **Supprimer** : Cliquez sur le bouton ×
-4. **Recharger la page** : Vérifiez que les modifications persistent
+- ✅ Ajout de tâches (POST)
+- ✅ Affichage des tâches (GET)
+- ✅ Toggle completed (PUT)
+- ✅ Suppression de tâches (DELETE)
+- ✅ Interface réactive et moderne
 
-## 💡 Points techniques importants
+## 🔍 Points clés
 
-### Méthodes HTTP utilisées
-- **GET** : Récupérer toutes les tâches
-- **POST** : Créer une nouvelle tâche
-- **PATCH** : Mettre à jour une tâche existante
-- **DELETE** : Supprimer une tâche
+1. **PUT** : Mise à jour partielle d'une ressource
+2. **DELETE** : Suppression d'une ressource
+3. **Template literals** : Utilisation de backticks pour les URLs dynamiques
+4. **Array methods** : `map()` pour modifier, `filter()` pour supprimer
+5. **Spread operator** : `{...t}` pour copier un objet
 
-### `e.stopPropagation()`
-Empêche l'événement de remonter au parent. Sans ça, cliquer sur le bouton supprimer déclencherait aussi le toggle.
+## 🎉 Félicitations !
 
-### `map` vs `filter`
-- **`map`** : Transformer/modifier des éléments (toggle)
-- **`filter`** : Retirer des éléments (delete)
-
-## 🎯 API complète
-
-```
-GET    /task         → Liste toutes les tâches
-POST   /task         → Crée une tâche
-PATCH  /task/:id     → Met à jour une tâche
-DELETE /task/:id     → Supprime une tâche
-```
-
-## 🎓 Exercices bonus
-
-1. Ajouter un compteur de tâches (Total / Complétées)
-2. Ajouter un bouton "Tout supprimer"
-3. Ajouter la possibilité de modifier le texte d'une tâche
-4. Ajouter des catégories de tâches
-5. Implémenter un filtre (Toutes / Actives / Complétées)
-
-## 📚 Ressources
-
-- [MDN - Fetch API](https://developer.mozilla.org/fr/docs/Web/API/Fetch_API)
-- [React - Gestion des événements](https://react.dev/learn/responding-to-events)
-- [MDN - stopPropagation](https://developer.mozilla.org/fr/docs/Web/API/Event/stopPropagation)
+Vous avez maintenant une application web complète et fonctionnelle avec CRUD complet !
 
 ---
 
-**Prochaine étape** : [Étape 7 - React Native](../etape-7-react-native/) - Application mobile avec Expo
+**Prochaine étape** : [Étape 7 - React Native (Mobile)](../etape-7-react-native/)

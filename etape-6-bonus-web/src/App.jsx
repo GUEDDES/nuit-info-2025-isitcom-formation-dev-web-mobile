@@ -1,111 +1,136 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 
-const API_URL = 'http://localhost:1337/task';
-
 function App() {
-  const [tasks, setTasks] = useState([]);
-  const [newTodoText, setNewTodoText] = useState('');
+  const [taches, setTaches] = useState([]);
+  const [nouvelleTache, setNouvelleTache] = useState('');
+  const [chargement, setChargement] = useState(true);
 
-  // Charger les tâches au démarrage
+  // Récupération des tâches au chargement
   useEffect(() => {
-    fetch(API_URL)
-      .then(res => res.json())
-      .then(data => setTasks(data))
-      .catch(err => console.error("Erreur de chargement:", err));
+    fetch('http://localhost:1337/todos')
+      .then(response => response.json())
+      .then(data => {
+        setTaches(data);
+        setChargement(false);
+      })
+      .catch(error => {
+        console.error('Erreur:', error);
+        setChargement(false);
+      });
   }, []);
 
-  // Ajouter une tâche
-  const handleAddTask = async (e) => {
+  // Ajouter une tâche (POST)
+  const ajouterTache = async (e) => {
     e.preventDefault();
-    if (!newTodoText.trim()) return;
-    
+    if (nouvelleTache.trim() === '') return;
+
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch('http://localhost:1337/todos', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          title: newTodoText,
-          isCompleted: false,
-        }),
+          title: nouvelleTache,
+          completed: false
+        })
       });
-      
-      const createdTask = await response.json();
-      setTasks([...tasks, createdTask]);
-      setNewTodoText('');
-    } catch (err) {
-      console.error("Erreur lors de l'ajout:", err);
+
+      if (response.ok) {
+        const tacheCreee = await response.json();
+        setTaches([...taches, tacheCreee]);
+        setNouvelleTache('');
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout:', error);
     }
   };
 
-  // 🆕 Marquer comme complétée / Activer
-  const handleToggleTask = async (taskId) => {
-    const task = tasks.find(t => t.id === taskId);
-    
+  // 🆕 Toggle tâche (PUT)
+  const toggleTache = async (id, completed) => {
     try {
-      const response = await fetch(`${API_URL}/${taskId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          isCompleted: !task.isCompleted,
-        }),
+      const response = await fetch(`http://localhost:1337/todos/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ completed: !completed })
       });
-      
-      const updatedTask = await response.json();
-      setTasks(tasks.map(t => t.id === taskId ? updatedTask : t));
-    } catch (err) {
-      console.error("Erreur lors du toggle:", err);
+
+      if (response.ok) {
+        setTaches(taches.map(t => 
+          t.id === id ? { ...t, completed: !completed } : t
+        ));
+      }
+    } catch (error) {
+      console.error('Erreur toggle:', error);
     }
   };
 
-  // 🆕 Supprimer une tâche
-  const handleDeleteTask = async (taskId) => {
+  // 🆕 Supprimer tâche (DELETE)
+  const supprimerTache = async (id) => {
     try {
-      await fetch(`${API_URL}/${taskId}`, {
-        method: 'DELETE',
+      const response = await fetch(`http://localhost:1337/todos/${id}`, {
+        method: 'DELETE'
       });
-      
-      setTasks(tasks.filter(t => t.id !== taskId));
-    } catch (err) {
-      console.error("Erreur lors de la suppression:", err);
+
+      if (response.ok) {
+        setTaches(taches.filter(t => t.id !== id));
+      }
+    } catch (error) {
+      console.error('Erreur suppression:', error);
     }
   };
+
+  if (chargement) {
+    return <div className="loading">Chargement...</div>;
+  }
+
+  const tachesCompletes = taches.filter(t => t.completed).length;
 
   return (
-    <div className="App-container">
-      <h1>Liste des Tâches</h1>
+    <div className="todo-container">
+      <h1>📝 Ma Todo List</h1>
       
-      <form onSubmit={handleAddTask} className="task-form">
+      <form className="todo-form" onSubmit={ajouterTache}>
         <input
           type="text"
-          className="task-input"
-          placeholder="Nouvelle tâche..."
-          value={newTodoText}
-          onChange={(e) => setNewTodoText(e.target.value)}
+          className="todo-input"
+          placeholder="Ajouter une tâche..."
+          value={nouvelleTache}
+          onChange={(e) => setNouvelleTache(e.target.value)}
         />
-        <button type="submit">Ajouter</button>
+        <button type="submit" className="btn-add">
+          Ajouter
+        </button>
       </form>
-      
-      <ul className="task-list">
-        {tasks.map(task => (
-          <li 
-            key={task.id} 
-            className={task.isCompleted ? 'completed' : ''}
-            onClick={() => handleToggleTask(task.id)}
-          >
-            <span>{task.title}</span>
+
+      <ul className="todo-list">
+        {taches.map((tache) => (
+          <li key={tache.id} className="todo-item">
+            <input
+              type="checkbox"
+              className="todo-checkbox"
+              checked={tache.completed}
+              onChange={() => toggleTache(tache.id, tache.completed)}
+            />
+            <span className={`todo-text ${tache.completed ? 'completed' : ''}`}>
+              {tache.title}
+            </span>
             <button 
-              className="delete-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteTask(task.id);
-              }}
+              className="btn-delete"
+              onClick={() => supprimerTache(tache.id)}
             >
-              ×
+              ✖️ Supprimer
             </button>
           </li>
         ))}
       </ul>
+
+      <div className="stats">
+        {tachesCompletes} / {taches.length} tâches complétées
+      </div>
     </div>
   );
 }
