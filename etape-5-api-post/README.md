@@ -1,136 +1,86 @@
-# Étape 5 : API POST - Envoyer des données
+# Étape 5 : API POST - Envoi de données
 
 ## 🎯 Objectif
-Dans cette étape, nous allons **envoyer de nouvelles tâches à notre API** via une requête POST, pour les sauvegarder dans la base de données.
 
-## 📚 Concepts couverts
-- Requête HTTP POST avec `fetch()`
-- Envoi de données JSON au serveur
-- Gestion des réponses serveur
-- Synchronisation état local et serveur
+Après avoir récupéré les données de l'API (GET), nous allons maintenant apprendre à **envoyer des données** vers le backend en utilisant la méthode **POST**.
 
-## 🔄 Différences avec l'étape 4
+## 📚 Concepts abordés
 
-### Dans l'étape 4
-- ✅ On récupère les tâches (GET)
-- ❌ Les nouvelles tâches sont ajoutées localement seulement
-- ❌ Rechargement de la page = perte des données
+- Requêtes HTTP POST avec `fetch()`
+- Envoi de données JSON au backend
+- Gestion des réponses du serveur
+- Mise à jour de l'état après création
 
-### Dans l'étape 5
-- ✅ On récupère les tâches (GET)
-- ✅ On envoie les nouvelles tâches au serveur (POST)
-- ✅ Les données persistent dans la base de données
+## 🔧 Modifications par rapport à l'étape 4
 
-## 🆕 Nouveautés dans le code
+### Dans `App.jsx`
 
-### Fonction `handleAddTask` améliorée
-
-```javascript
-const handleAddTask = async (e) => {
+```jsx
+// Nouvelle fonction pour ajouter une tâche via l'API
+const ajouterTache = async (e) => {
   e.preventDefault();
-  if (!newTodoText.trim()) return;
-  
+  if (nouvelleTache.trim() === '') return;
+
   try {
-    // 1. Envoyer la requête POST au serveur
-    const response = await fetch(API_URL, {
+    const response = await fetch('http://localhost:1337/todos', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        title: newTodoText,
-        isCompleted: false,
-      }),
+        title: nouvelleTache,
+        completed: false
+      })
     });
-    
-    // 2. Récupérer la tâche créée par le serveur
-    const createdTask = await response.json();
-    
-    // 3. Ajouter la tâche à notre état local
-    setTasks([...tasks, createdTask]);
-    setNewTodoText('');
-  } catch (err) {
-    console.error("Erreur lors de l'ajout:", err);
+
+    if (response.ok) {
+      const tacheCreee = await response.json();
+      setTaches([...taches, tacheCreee]);
+      setNouvelleTache('');
+    }
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout:', error);
   }
 };
 ```
 
-### Points clés
+## 🚀 Démarrage
 
-1. **`async/await`** : Syntaxe moderne pour gérer les promesses
-2. **`method: 'POST'`** : Indique qu'on envoie des données
-3. **`headers`** : Précise qu'on envoie du JSON
-4. **`body`** : Les données à envoyer (converties en JSON)
-5. **`createdTask`** : Le serveur renvoie la tâche avec son ID
-
-## 📝 Structure du projet
-
-```
-etape-5-api-post/
-├── README.md
-├── package.json
-├── vite.config.js
-├── index.html
-└── src/
-    ├── App.jsx      ← Code modifié ici
-    ├── App.css
-    └── main.jsx
-```
-
-## 🚀 Installation et lancement
-
-### 1. Installer les dépendances
+### 1. Backend (Terminal 1)
 ```bash
-cd etape-5-api-post
-npm install
-```
-
-### 2. Lancer le serveur backend
-**Dans un autre terminal :**
-```bash
-cd ../etape-0-backend
+cd ../etape-0-backend/todo-api
 npm start
 ```
 
-### 3. Lancer l'application React
+### 2. Frontend (Terminal 2)
 ```bash
+cd etape-5-api-post
+npm install
 npm run dev
 ```
 
-### 4. Ouvrir dans le navigateur
-```
-http://localhost:5173
-```
+Ouvrez [http://localhost:5173](http://localhost:5173)
 
-## ✅ Test de l'étape
+## ✅ Résultat attendu
 
-1. **Ajouter une tâche** : Tapez "Faire les courses" et cliquez sur Ajouter
-2. **Vérifier dans le navigateur** : La tâche apparaît
-3. **Recharger la page (F5)** : La tâche est toujours là ! 🎉
-4. **Vérifier dans l'API** : Ouvrez http://localhost:1337/task
+- Formulaire fonctionnel qui envoie les données au backend
+- Les tâches ajoutées apparaissent immédiatement dans la liste
+- Les données sont persistées dans la base de données
+- Les tâches restent après rechargement de la page
 
-## 🔍 Comparer avec l'étape précédente
+## 🔍 Points clés
 
-```bash
-# Voir les différences de code
-git diff etape-4-api-get/src/App.jsx etape-5-api-post/src/App.jsx
-```
+1. **Method POST** : Indique qu'on envoie des données
+2. **Headers** : Spécifie qu'on envoie du JSON
+3. **Body** : Contient les données à envoyer (stringify)
+4. **Response.ok** : Vérifie que la requête a réussi
+5. **Mise à jour état** : Ajoute la nouvelle tâche à la liste
 
-## 💡 Points importants
-
-- Le serveur génère automatiquement l'`id` et la date de création
-- On utilise la tâche renvoyée par le serveur (pas celle créée localement)
-- La gestion d'erreur avec `try/catch` est essentielle
-- Les données persistent maintenant dans la base de données
-
-## 🎓 Exercice bonus
-
-Modifiez le code pour afficher un message d'erreur à l'utilisateur si l'ajout échoue.
-
-## 📚 Ressources
+## 📖 Ressources
 
 - [MDN - Fetch API](https://developer.mozilla.org/fr/docs/Web/API/Fetch_API)
-- [MDN - async/await](https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Statements/async_function)
-- [Sails.js - Blueprint API](https://sailsjs.com/documentation/concepts/blueprints)
+- [MDN - POST](https://developer.mozilla.org/fr/docs/Web/HTTP/Methods/POST)
 
 ---
 
-**Prochaine étape** : [Étape 6 - Bonus Web](../etape-6-bonus-web/) - Interaction complète (toggle des tâches)
+**Prochaine étape** : [Étape 6 - Bonus Web (Toggle)](../etape-6-bonus-web/)

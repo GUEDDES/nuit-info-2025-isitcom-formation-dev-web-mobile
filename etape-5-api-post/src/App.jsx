@@ -1,65 +1,84 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 
-const API_URL = 'http://localhost:1337/task';
-
 function App() {
-  const [tasks, setTasks] = useState([]);
-  const [newTodoText, setNewTodoText] = useState('');
+  const [taches, setTaches] = useState([]);
+  const [nouvelleTache, setNouvelleTache] = useState('');
+  const [chargement, setChargement] = useState(true);
 
-  // Charger les tâches au démarrage
+  // Récupération des tâches au chargement
   useEffect(() => {
-    fetch(API_URL)
-      .then(res => res.json())
-      .then(data => setTasks(data))
-      .catch(err => console.error("Erreur de chargement:", err));
+    fetch('http://localhost:1337/todos')
+      .then(response => response.json())
+      .then(data => {
+        setTaches(data);
+        setChargement(false);
+      })
+      .catch(error => {
+        console.error('Erreur:', error);
+        setChargement(false);
+      });
   }, []);
 
-  // 🆕 Fonction améliorée avec POST
-  const handleAddTask = async (e) => {
+  // 🆕 Fonction pour ajouter une tâche via POST
+  const ajouterTache = async (e) => {
     e.preventDefault();
-    if (!newTodoText.trim()) return;
-    
+    if (nouvelleTache.trim() === '') return;
+
     try {
-      // 1. Envoyer la requête POST au serveur
-      const response = await fetch(API_URL, {
+      const response = await fetch('http://localhost:1337/todos', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          title: newTodoText,
-          isCompleted: false,
-        }),
+          title: nouvelleTache,
+          completed: false
+        })
       });
-      
-      // 2. Récupérer la tâche créée par le serveur
-      const createdTask = await response.json();
-      
-      // 3. Ajouter la tâche à notre état local
-      setTasks([...tasks, createdTask]);
-      setNewTodoText('');
-    } catch (err) {
-      console.error("Erreur lors de l'ajout:", err);
+
+      if (response.ok) {
+        const tacheCreee = await response.json();
+        setTaches([...taches, tacheCreee]);
+        setNouvelleTache('');
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout:', error);
     }
   };
 
+  if (chargement) {
+    return <div className="loading">Chargement...</div>;
+  }
+
   return (
-    <div className="App-container">
-      <h1>Liste des Tâches</h1>
+    <div className="todo-container">
+      <h1>📝 Ma Todo List</h1>
       
-      <form onSubmit={handleAddTask} className="task-form">
+      <form className="todo-form" onSubmit={ajouterTache}>
         <input
           type="text"
-          className="task-input"
-          placeholder="Nouvelle tâche..."
-          value={newTodoText}
-          onChange={(e) => setNewTodoText(e.target.value)}
+          className="todo-input"
+          placeholder="Ajouter une tâche..."
+          value={nouvelleTache}
+          onChange={(e) => setNouvelleTache(e.target.value)}
         />
-        <button type="submit">Ajouter</button>
+        <button type="submit" className="btn-add">
+          Ajouter
+        </button>
       </form>
-      
-      <ul className="task-list">
-        {tasks.map(task => (
-          <li key={task.id}>{task.title}</li>
+
+      <ul className="todo-list">
+        {taches.map((tache) => (
+          <li key={tache.id} className="todo-item">
+            <input
+              type="checkbox"
+              className="todo-checkbox"
+              checked={tache.completed}
+              readOnly
+            />
+            <span className="todo-text">{tache.title}</span>
+          </li>
         ))}
       </ul>
     </div>
